@@ -2,19 +2,19 @@
 module use /.mounts/labs/PDE/Modules/modulefiles
 module load python-gsi/3.6.4
 
-BAM=$1
+BAM=$1 # sorted indexxed bam file
 OUTDIR=$2
 NAME=$3
 
 
 REF=/.mounts/labs/resit/modulator/sw/data/hg38-p12/hg38_random.fa
 # debarcer installation
-DEBARCER=/.mounts/labs/gsiprojects/dicklab/MATS/tools/debarcer
+DEBARCER=/.mounts/labs/gsiprojects/dicklab/MATS/tools/debarcer/debarcer
 
 # obtain bed
 BED=${OUTDIR}/${NAME}.bed
 if [[ ! -f ${BED} ]]; then
-  python3 ${DEBARCER}/debarcer.py bed -b ${BAM} -bd ${BED} -io -mv 1
+  python3 ${DEBARCER}/debarcer.py bed -b ${BAM} -bd ${BED} -r 10 -io -mv 1
 fi
 
 #
@@ -22,7 +22,7 @@ fi
 python3 ${DEBARCER}/debarcer.py run \
   -o ${OUTDIR} \
   -b ${BAM} \
-  -rf $REF \
+  -rf ${REF} \
   -f "1,2,3,5,10" \
   -bd ${BED} \
   -ct 1 \
