@@ -3,7 +3,7 @@ PROJ=$1
 LIBTYPE="TS"
 BASEDIR=/.mounts/labs/gsiprojects/dicklab/
 PROV=/.mounts/labs/seqprodbio/private/backups/seqware_files_report_latest.tsv.gz
-mem=32
+mem=80
 DATADIR=$BASEDIR/$PROJ/data
 
 if [[ -z $PROJ ]]; then
@@ -45,9 +45,12 @@ for miso in $libNames; do
   if [[ ! -f $R2 ]];then echo "$R2 non-exisitent"; fi
 
   script=$SCRP/${ident_name}.CC.sh
+
+  OUT=$OUTDIR/${sample_name}
+  mkdir -p $OUT
   #launch script
   echo '#!/bin/bash' > ${script}
-  echo "$TSCC $OUTDIR $R1 $R2" >> ${script}
+  echo "$TSCC $OUT $R1 $R2" >> ${script}
   chmod +x $script
   qsub -P gsi -V -l h_vmem=${mem}G -N ${ident_name}_CC -e ${LOGD} -o ${LOGD} ${script}
   # break

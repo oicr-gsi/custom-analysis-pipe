@@ -67,6 +67,7 @@ for miso in $libNames; do
   echo "rm $OUTDIR/${sample_name}.bam" >> ${script}
   chmod +x ${script}
   if [[ ! -f $OUTDIR/${sample_name}.sorted.bam ]]; then
+    echo "will launch for $ident_name"
     qsub -P gsi -V -l h_vmem=${mem}G -N ${ident_name}_bwa -e ${LOGD} -o ${LOGD} ${script}
   fi
   # break

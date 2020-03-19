@@ -3,7 +3,7 @@ PROJ=$1
 LIBTYPE="TS"
 BASEDIR=/.mounts/labs/gsiprojects/dicklab/
 # PROV=/.mounts/labs/seqprodbio/private/backups/seqware_files_report_latest.tsv.gz
-mem=64
+mem=128
 DATADIR=$BASEDIR/$PROJ/data
 
 if [[ -z $PROJ ]]; then
@@ -14,7 +14,8 @@ fi
 TSCC=$BASEDIR/$PROJ/MATS_devel/TGL_consensus_cruncher.sh
 WKFLDIR=$DATADIR/$LIBTYPE/CASAVA
 
-OUTDIR=$DATADIR/$LIBTYPE/umiExtract
+# OUTDIR=$DATADIR/$LIBTYPE/umiExtract
+OUTDIR=/scratch2/groups/gsi/bis/prath/MATS/umiExtract
 echo $OUTDIR
 if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR; fi
 SCRP=$OUTDIR/script; mkdir -p $SCRP
@@ -36,21 +37,24 @@ for miso in $libNames; do
   # ident
 
   ident_name="${PROJ}_${patient_name}_${sample_name}_${miso}_${run_name}"
-  R1=$WKFLDIR/${ident_name}.R1.umi.fastq.gz
-  R2=$WKFLDIR/${ident_name}.R2.umi.fastq.gz
+  R1=/scratch2/groups/gsi/bis/prath/MATS/umiExtract/${ident_name}.R1.umi.fastq
+  R2=/scratch2/groups/gsi/bis/prath/MATS/umiExtract/${ident_name}.R2.umi.fastq
 
-  if [[ ! -f $R1 ]];then echo "$R1 non-exisitent"; fi
-  if [[ ! -f $R2 ]];then echo "$R2 non-exisitent"; fi
+   # echo "$R1 non-exisitent"; exit; fi
+  # if [[ ! -f $R2 ]];then echo "$R2 non-exisitent"; exit; fi
 
-  script=$SCRP/${ident_name}.umi_extract.sh
+  script=$SCRP/${ident_name}.umi_sep.sh
   #launch script
   echo '#!/bin/bash' > ${script}
-  echo "export MODULEPATH=/.mounts/labs/resit/modulator/modulefiles/data:/.mounts/labs/resit/modulator/modulefiles/Ubuntu18.04:/.mounts/labs/gsi/modulator/modulefiles/data:/.mounts/labs/gsi/modulator/modulefiles/Ubuntu18.04" >> ${script}
-  echo "module load umi-tools/1.0.0" >> ${script}
-  echo "umi_tools extract --extract-method=regex --bc-pattern='(?P<umi_1>.{3})(?P<discard_1>.{2})' --bc-pattern2='(?P<umi_1>.{3})(?P<discard_1>.{2})' --stdin=$R1 --stdout=$OUTDIR/${ident_name}.R1.umi.fastq --read2-in=$R2 --read2-out=$OUTDIR/${ident_name}.R2.umi.fastq --log=$OUTDIR/${ident_name}.log" >> ${script}
-  echo "gzip -f $OUTDIR/${ident_name}.R1.umi.fastq" >>${script}
-  echo "gzip -f $OUTDIR/${ident_name}.R2.umi.fastq" >>${script}
+  if [[ ! -f $R1 ]];then
+    echo "sed -i 's/_/;/g' $OUTDIR/${ident_name}.R1.umi.fastq" >> ${script}
+    echo "gzip -f $OUTDIR/${ident_name}.R1.umi.fastq" >>${script}
+  fi
+  if [[ ! -f $R2 ]];then
+    echo "sed -i 's/_/;/g' $OUTDIR/${ident_name}.R2.umi.fastq" >> ${script}
+    echo "gzip -f $OUTDIR/${ident_name}.R2.umi.fastq" >>${script}
+  fi
   chmod +x $script
-  qsub -P gsi -V -l h_vmem=${mem}G -N ${ident_name}_umi -e ${LOGD} -o ${LOGD} ${script}
+  qsub -P gsi -V -l h_vmem=${mem}G -N ${ident_name}_umisep -e ${LOGD} -o ${LOGD} ${script}
   # break
 done

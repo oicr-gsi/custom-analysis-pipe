@@ -16,7 +16,7 @@ fi
 # WKFLDIR=$DATADIR/$LIBTYPE/CASAVA
 
 # OUTDIR=$DATADIR/$LIBTYPE/umiExtract
-OUTDIR=/scratch2/groups/gsi/bis/prath/MATS/debarcer_out
+OUTDIR=/scratch2/groups/gsi/bis/prath/MATS/debarcer_res
 # OUTDIR=
 echo $OUTDIR
 if [[ ! -d $OUTDIR ]]; then mkdir -p $OUTDIR; fi
@@ -26,6 +26,8 @@ LOGD=$OUTDIR/logs; mkdir -p $LOGD
 # DATADIR=$BASEDIR/$PROJ/data
 DATADIR=/scratch2/groups/gsi/bis/prath/MATS/bwa_align
 libNames=`cat $BASEDIR/$PROJ/data/$PROJ.tmp | cut -d\| -f14 | sort | uniq`
+
+# batch this
 
 for miso in $libNames; do
   # echo "cat $DATADIR/$PROJ.tmp | grep $miso | grep \"CASAVA\" | cut -d\| -f14,31,47 | tr \"|\" \"\\t\" | sort"
@@ -40,7 +42,7 @@ for miso in $libNames; do
   # ident
 
   ident_name="${PROJ}_${patient_name}_${sample_name}_${miso}"
-  OUT=$OUTDIR/${PROJ}_${patient_name}/${sample_name}
+  OUT=$OUTDIR/${sample_name}
   if [[ ! -d $OUT ]];then
     mkdir -p $OUT
   fi
@@ -49,12 +51,16 @@ for miso in $libNames; do
 
   if [[ ! -f $BAM ]];then
     echo "$BAM non-existent";
+    continue
   else
     script=$SCRP/${sample_name}.debarcer_run.sh
     echo '#!/bin/bash' > ${script}
-    echo "${DEBARCER_SCRP} ${BAM} ${OUT} ${sample_name}" >> ${script}
+    echo "${DEBARCER_SCRP} ${BAM} ${OUT}" >> ${script}
     chmod +x ${script}
-    qsub -V -l h_vmem=${mem}G -N ${sample_name}_debarcer -e ${LOGD} -o ${LOGD} ${script}
+    # echo "Will launch for $BAM"
+    oldjname="nil"
+    qsub -V -l h_vmem=${mem}G -hold_jid $oldjname -N ${sample_name}_debarcer -e ${LOGD} -o ${LOGD} ${script}
+    oldjname="${sample_name}_debarcer"
   fi
-  # break
+  break
 done
